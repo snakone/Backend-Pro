@@ -1,0 +1,22 @@
+{
+  "name": "backend-admin-pro",
+  "version": "0.0.1",
+  "description": "Backend Admin Pro",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "nodemon src/server"
+  },
+  "keywords": [
+    "backend"
+  ],
+  "author": "Sergi Martínez",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.16.4",
+    "mongoose": "^5.3.9"
+  },
+  "devDependencies": {
+    "morgan": "^1.9.1",
+    "nodemon": "^1.18.5"
+  }
+}

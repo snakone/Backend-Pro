@@ -3,7 +3,7 @@ mongoose.set('useCreateIndex', true);
 mongoose.set('useFindAndModify', false);
 
 // MongoDB URI Driver String Node.js
-const URI = 'mongodb+srv://Snakone:pocketvilla@cluster0-ov8vp.mongodb.net/Hospital?retryWrites=true';
+const URI = 'mongodb+srv://DB_USER:DB_PASS@CLUSTER_URL/DB_NAME?retryWrites=true';
 // Make Password on another FILE
 
 mongoose.connect(URI, { useNewUrlParser: true })  // New Parse Mode

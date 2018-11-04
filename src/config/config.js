@@ -1,1 +1,1 @@
-module.exports.SEED = '@Chica-Espejo-Planta@'
+module.exports.SEED = '@Just-a-Random-Seed@'

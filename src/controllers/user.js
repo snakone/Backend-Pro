@@ -4,7 +4,9 @@ const encrypt = require('bcryptjs');  // Encrypt Password
 const USERCTRL = {};  // Create Object. We add Methods to it so We can use them OUTSIDE later
 
 USERCTRL.getUsers = async (req, res) => {  // Get ALL USERS
-    const user = await userModel.find({}, {}, (err, users) =>{
+    let offset = req.query.offset || 0;
+    offset = Number (offset);
+    const users = await userModel.find({}, {}, (err, users) =>{
       if (err) {
         return res.status(500).json({
           ok: false,
@@ -12,11 +14,17 @@ USERCTRL.getUsers = async (req, res) => {  // Get ALL USERS
           err
         });
       }
+    }).skip(offset)
+      .limit(5);
+
+    userModel.countDocuments({},(err, count) => {
+      res.status(200).json({
+        ok: true,
+        users,
+        userCount: count
+      });  // Send User to server as JSON
     });
-        res.status(200).json({
-          ok: true,
-          user
-        });  // Send User to server as JSON
+
 }
 
 
@@ -34,7 +42,7 @@ USERCTRL.addUser = async (req, res) => {  // Add a USER
         res.status(201).json({
           ok: true,
           user: createdUser,
-          token: req.usuario
+          token: req.user
         });  // Send User to server as JSON
     });
 
@@ -43,11 +51,7 @@ USERCTRL.addUser = async (req, res) => {  // Add a USER
 USERCTRL.updateUserbyId = async (req, res) => {  // Get ALL USERS
 
     let id = req.params.id;
-    let user = {
-      name: req.body.name,
-      email: req.body.email,
-      role: req.body.role
-    };
+    let user = req.body;
 
     if (user.name == null || user.email == null || user.role == null) {
       return res.status(400).json({
@@ -107,7 +111,5 @@ USERCTRL.deleteUser = async (req, res) => {  // Remove User from MongoDB
   });  // Remove by ID
 
 }
-
-
 
 module.exports = USERCTRL;  // Exports the Object with all the Methods

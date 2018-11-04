@@ -1,10 +1,7 @@
 const mainRouter = require('express').Router();  // Express Router
 
-mainRouter.get('/', async (req, res)=> {
-  res.status(200).json({
-    ok: true,
-    message: 'Everything OK'
-  })
-});
+const MAIN = require('../controllers/main');  // User Controller
+
+mainRouter.get('/images', MAIN.function);
 
 module.exports = mainRouter;  // Export router - Export Class on TypeScript

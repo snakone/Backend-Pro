@@ -27,7 +27,6 @@ USERCTRL.getUsers = async (req, res) => {  // Get ALL USERS
 
 }
 
-
 USERCTRL.addUser = async (req, res) => {  // Add a USER
     req.body.password = encrypt.hashSync(req.body.password, 10);
     const user = new userModel (req.body);

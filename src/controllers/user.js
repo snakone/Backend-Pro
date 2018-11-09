@@ -1,34 +1,12 @@
-const userModel = require('../models/user');  // User Model = MongoDB Collection
+const userModel = require('../models/user');  // User Model
 const encrypt = require('bcryptjs');  // Encrypt Password
 
-const USERCTRL = {};  // Create Object. We add Methods to it so We can use them OUTSIDE later
+const USERCTRL = {};  // Create Object.
 
-USERCTRL.getUsers = async (req, res) => {  // Get ALL USERS
-    let offset = req.query.offset || 0;
-    offset = Number (offset);
-    const users = await userModel.find({}, {}, (err, users) =>{
-      if (err) {
-        return res.status(500).json({
-          ok: false,
-          message: "Error loading Users",
-          err
-        });
-      }
-    }).skip(offset)
-      .limit(5);
+// CREATE
+USERCTRL.addUser = async (req, res) => {  // ADD AN USER
 
-    userModel.countDocuments({},(err, count) => {
-      res.status(200).json({
-        ok: true,
-        users,
-        userCount: count
-      });  // Send User to server as JSON
-    });
-
-}
-
-USERCTRL.addUser = async (req, res) => {  // Add a USER
-    req.body.password = encrypt.hashSync(req.body.password, 10);
+    req.body.password = encrypt.hashSync(req.body.password, 10);  // Encrypt
     const user = new userModel (req.body);
     await user.save((err, createdUser)=> {
       if (err) {
@@ -40,75 +18,104 @@ USERCTRL.addUser = async (req, res) => {  // Add a USER
       }
         res.status(201).json({
           ok: true,
-          user: createdUser,
-          token: req.user
-        });  // Send User to server as JSON
+          user: createdUser
+        });
     });
-
 }
 
-USERCTRL.updateUserbyId = async (req, res) => {  // Get ALL USERS
+// READ
+USERCTRL.getUsers = async (req, res) => {  // GET ALL USERS
 
-    let id = req.params.id;
-    let user = req.body;
-
-    if (user.name == null || user.email == null || user.role == null) {
-      return res.status(400).json({
-        ok: false,
-        message: "Introduce los datos",
-      });
-    }
-
-    await userModel.findByIdAndUpdate(id, {$set: user}, (err, updatedUser) => {
-      if (!updatedUser){
-        return res.status(400).json({
+    let offset = req.query.offset || 0;  // Pagination
+    offset = Number (offset);
+    const users = await userModel.find({}, {password: 0}, (err, users) =>{
+      if (err) {
+        return res.status(500).json({
           ok: false,
-          message: "User with " + id + " doesn't exist",
+          message: "Error loading Users",
           err
         });
       }
+    }).skip(offset)
+      .limit(10);
 
-      if (err){
-        return  res.status(500).json({
-            ok: false,
-            message: 'Error al actualizar User',
-            err
-          });
-      }
-
+    userModel.countDocuments({},(err, count) => {  // Document Count
       res.status(200).json({
         ok: true,
-        user: updatedUser
-      });  // Send User to server as JSON
-    });  // Find by ID and Update in MongoDB
+        users,
+        userCount: count
+      });
+    });
 }
 
-USERCTRL.deleteUser = async (req, res) => {  // Remove User from MongoDB
+// UPDATE
+USERCTRL.updateUserbyId = async (req, res) => {  // UPDATE AN USER BY ID
+  
+  let id = req.params.id;
+  userModel.findById(id, (err, user) => {
+   if (err) {
+       return res.status(500).json({
+           ok: false,
+           mensaje: 'Error searching User',
+           errors: err
+       });
+   }
+
+   if (!user) {  // No User with given ID?
+       return res.status(400).json({
+           ok: false,
+           mensaje: "User with ID " + id + " doesn't exist"
+       });
+   }
+
+   user.name = req.body.name;  // Data Assignament
+   user.email = req.body.email;
+   user.lastName = req.body.lastName;
+   user.role = req.body.role;
+
+   user.save((err, updatedUser) => {  // Save User with the new Data
+       if (err) {
+           return res.status(400).json({
+               ok: false,
+               mensaje: 'Error updating User',
+               errors: err
+           });
+         }
+         updatedUser.password = null;  // No need Response the Password
+
+         res.status(200).json({
+             ok: true,
+             user: updatedUser
+        });
+    }); // End of Save
+  }); // End of Find
+}
+
+// DELETE
+USERCTRL.deleteUser = (req, res) => {  // Remove User from MongoDB
 
   let id = req.params.id;
-  await userModel.findByIdAndRemove(id, (err, deletedUser) => {
+  userModel.findByIdAndRemove(id, (err, deletedUser) => {
     if (err) {
       return res.status(500).json({
         ok: false,
-        message: "Error deleting Users",
+        message: "Error removing User",
         err
       });
     }
 
-    if (!deletedUser) {
+    if (!deletedUser) {  // No User with given ID?
       return res.status(400).json({
         ok: false,
-        message: "User with " + id + " doesn't exist",
+        message: "User with ID " + id + " doesn't exist",
       });
     }
 
     res.status(200).json({
       ok: true,
       user: deletedUser
-    });  // Send User to server as JSON
-
-  });  // Remove by ID
-
+    });
+  });
 }
 
 module.exports = USERCTRL;  // Exports the Object with all the Methods

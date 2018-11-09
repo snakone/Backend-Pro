@@ -1,14 +1,14 @@
 const express = require('express');
 const app = express();
-const fs = require('fs');
+const fs = require('fs');  // File System
 
-const userModel = require('../models/user');  // User Model = MongoDB Collection
-const hospitalModel = require('../models/hospital');  // Hospital Model = MongoDB Collection
-const doctorModel = require('../models/doctor');  // Doctor Model = MongoDB Collection
+const userModel = require('../models/user');  // User Model
+const hospitalModel = require('../models/hospital');  // Hospital Model
+const doctorModel = require('../models/doctor');  // Doctor Model
 
-const UPLOADCTRL = {};  // Create Object. We add Methods to it so We can use them OUTSIDE later
+const UPLOADCTRL = {};  // Create Object.
 
-UPLOADCTRL.uploadFile = async (req, res) => {  // Get ALL DOCTOR
+UPLOADCTRL.uploadFile = async (req, res) => {  // UPLOAD FILE INTO SERVER
 
   let id = req.params.id;
   let collection = req.params.collection;
@@ -17,63 +17,60 @@ UPLOADCTRL.uploadFile = async (req, res) => {  // Get ALL DOCTOR
   if (!allowedCollections.includes(collection)){
     return res.status(400).json({
       ok: false,
-      message: 'Colección no válida',
-      error: {message: 'Las colecciones válidas son ' + allowedCollections.join(', ')},
-    });  // Send User to server as JSON
+      message: 'Invalid Collection',
+      error: {message: 'Allowed Collections ' + allowedCollections.join(', ')},
+    });
   }
 
-   if (!req.files){
+   if (!req.files){  // No File Selected?
      return res.status(400).json({
        ok: false,
-       message: "No Seleccionó nada",
-       errror: {message: "Debe seleccionar una imagen"}
+       message: "Select a File first!"
      });
    }
 
-    let file = req.files.image;
+    let file = req.files.image;  // Get the FILE from the Request
     let fileSplit = file.name.split('.');
-    let fileExt = fileSplit[fileSplit.length - 1];
+    let fileExt = fileSplit[fileSplit.length - 1];  // Get File extension (.jpg,.png)
 
     let allowedExt = ['jpg','png','jpeg'];
 
     if (!allowedExt.includes(fileExt)){
       return res.status(400).json({
         ok: false,
-        message: 'Extensión no válida',
-        error: {message: 'Las extensiones válidas son ' + allowedExt.join(', ')},
+        message: 'File extension not allowed',
+        error: {message: 'Allowed extensions ' + allowedExt.join(', ')},
         file: fileExt
-      });  // Send User to server as JSON
+      });
     }
 
-    let fileName = `${id}-${new Date().getMilliseconds()}.${fileExt}`;
+    let fileName = `${id}-${new Date().getMilliseconds()}.${fileExt}`;  // Random File Name
     let filePath = `./src/uploads/${collection}/${fileName}`;
 
-    checkCollection(collection, id, file, fileName, filePath, res);
-
+    checkCollection(collection, id, file, fileName, filePath, res);  // MAIN Function
 }
 
-function moveFile(file, filePath){
+function moveFile(file, filePath){  // Move the FILE into PATH
   file.mv(filePath, err => {
     if (err){
       return res.status(500).json({
         ok: false,
-        message: 'Error al mover archivo',
+        message: 'Error while moving the File',
         err,
         filePath
-      });  // Send User to server as JSON
-    }
+      });
+     }
   });
 }
 
+ function checkCollection(collection, id, file, fileName, filePath, res){
 
-function checkCollection(collection, id, file, fileName, filePath, res){
-    if (collection === 'users'){
-      userModel.findById(id, (err, user) => {
-
+    if (collection === 'users'){  // COLLECTION USER?
+       userModel.findById(id, (err, user) => {
         if (!user){
           return res.status(400).json({
             ok: false,
-            message: 'El usuario no existe',
+            message: "User doesn't exist",
           });}
 
         let oldPath = './src/uploads/users/' + user.image;
@@ -82,38 +79,38 @@ function checkCollection(collection, id, file, fileName, filePath, res){
             if (err) {
               return res.status(500).json({
                 ok: false,
-                message: 'Error al eliminar foto antigua',
+                message: 'Error deleting User old Photo',
               });
             }
           });
         }
+
         user.image = fileName;
-        user.save((err, updatedUser) => {
+        user.save((err, updatedUser) => {  // Save with new Image
           if (err){
             return res.status(500).json({
               ok: false,
-              message: 'Error al actualizar foto',
+              message: 'Error updating User Photo',
             });
           }
-            moveFile(file, filePath);
-
-            updatedUser.password = null;
+            moveFile(file, filePath);  // Move the FILE into PATH
+            updatedUser.password = null;  // No need to response the Password
             res.status(200).json({
               ok: true,
-              message: 'Archivo actualizado!',
+              message: 'User Photo updated!',
               updatedUser
           });
         });
       });
     }
 
-    if (collection === 'hospitals'){
-      hospitalModel.findById(id, (err, hospital) => {
+    if (collection === 'hospitals'){  // COLLECTION HOSPITAL?
 
+       hospitalModel.findById(id, (err, hospital) => {
         if (!hospital){
           return res.status(400).json({
             ok: false,
-            message: 'El hospital no existe',
+            message: "Hospital doesn't exist",
           });}
 
         let oldPath = './src/uploads/hospitals/' + hospital.image;
@@ -122,37 +119,37 @@ function checkCollection(collection, id, file, fileName, filePath, res){
             if (err) {
               return res.status(500).json({
                 ok: false,
-                message: 'Error al eliminar foto antigua',
+                message: 'Error deleting Hospital old Photo',
               });
             }
           });
         }
+
         hospital.image = fileName;
-        hospital.save((err, updatedHospital) => {
+        hospital.save((err, updatedHospital) => {  // Save with new Image
           if (err){
             return res.status(500).json({
               ok: false,
-              message: 'Error al actualizar foto',
+              message: 'Error updating Hospital Photo',
             });
           }
-            moveFile(file, filePath);
-
+            moveFile(file, filePath); // Move the FILE into PATH
             res.status(200).json({
               ok: true,
-              message: 'Archivo actualizado!',
+              message: 'Hospital Photo updated!',
               updatedHospital
           });
         });
       });
     }
 
-    if (collection === 'doctors'){
-      doctorModel.findById(id, (err, doctor) => {
+    if (collection === 'doctors'){  // COLLECTION DOCTOR?
 
+      doctorModel.findById(id, (err, doctor) => {
         if (!doctor){
           return res.status(400).json({
             ok: false,
-            message: 'El doctor no existe',
+            message: "Doctor doesn't exist",
           });}
 
         let oldPath = './src/uploads/doctors/' + doctor.image;
@@ -161,24 +158,24 @@ function checkCollection(collection, id, file, fileName, filePath, res){
             if (err) {
               return res.status(500).json({
                 ok: false,
-                message: 'Error al eliminar foto antigua',
+                message: 'Error deleting Doctor old Photo',
               });
             }
           });
         }
+
         doctor.image = fileName;
-        doctor.save((err, updatedDoctor) => {
+        doctor.save((err, updatedDoctor) => {  // Save with new Image
           if (err){
             return res.status(500).json({
               ok: false,
-              message: 'Error al actualizar foto',
+              message: 'Error updating Doctor Photo',
             });
           }
-            moveFile(file, filePath);
-
+            moveFile(file, filePath); // Move the FILE into PATH
             res.status(200).json({
               ok: true,
-              message: 'Archivo actualizado!',
+              message: 'Doctor Photo updated!',
               updatedDoctor
           });
         });

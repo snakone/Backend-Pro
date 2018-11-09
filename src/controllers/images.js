@@ -1,19 +1,18 @@
-const IMAGECTRL = {};  // Create Object. We add Methods to it so We can use them OUTSIDE later
-
+const IMAGECTRL = {};  // Create Object.
 const path = require('path');
-const fs = require('fs');
+const fs = require('fs');  // File System
 
 IMAGECTRL.getImage = async (req, res)=> {
 
-  let collection = req.params.collection;
+  let collection = req.params.collection; // Data from URL
   let image = req.params.image;
 
-  let imagePath = path.resolve(__dirname, `../uploads/${collection}/${image}`);
+  let imagePath = path.resolve(__dirname, `../uploads/${collection}/${image}`);  // Server PATH
 
-  if (fs.existsSync(imagePath)){
+  if (fs.existsSync(imagePath)){  // Image on Server? Send IT
     res.sendFile(imagePath);
   } else {
-    let noImagePath = path.resolve(__dirname, `../assets/no-img.jpg`);
+    let noImagePath = path.resolve(__dirname, `../assets/no-image.jpg`);
     res.sendFile(noImagePath);
   }
 };

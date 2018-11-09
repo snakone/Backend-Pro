@@ -1,95 +1,85 @@
-const userModel = require('../models/user');  // Hospital Model = MongoDB Collection
-const doctorModel = require('../models/doctor');  // Hospital Model = MongoDB Collection
-const hospitalModel = require('../models/hospital');  // Hospital Model = MongoDB Collection
+const userModel = require('../models/user');  // Hospital Model
+const doctorModel = require('../models/doctor');  // Hospital Model
+const hospitalModel = require('../models/hospital');  // Hospital Model
 
-const SEARCHCTRL = {};  // Create Object. We add Methods to it so We can use them OUTSIDE later
+const SEARCHCTRL = {};  // Create Object.
 
-SEARCHCTRL.searchValue = async (req, res)=> {
+SEARCHCTRL.searchValue = async (req, res)=> {  // Search Value Within ALL Collections
 
   let value = req.params.value;
   let filter = new RegExp (value, 'i');  // Insensible to Upper/Lower Case
 
-  Promise.all([
-          searchUsers(value,filter),
-          searchHospitals(value,filter),
-          searchDoctors(value,filter),
+  Promise.all([  // All at Once, Response with ALL Results if Success
+          searchUsers(filter),
+          searchHospitals(filter),
+          searchDoctors(filter),
         ]).then(result => {
           res.status(200).json({
             ok: true,
-            hospitals: result[0],
-            doctors: result[1],
-            users: result[2]
+            users: result[0],  // Just the Order
+            hospitals: result[1],
+            doctors: result[2]
           });
-        })
-  };
+        });
+}
 
-SEARCHCTRL.searchData = async (req, res)=> {
+SEARCHCTRL.searchData = async (req, res)=> {  // Search a Value within a Collection
 
   let collection = req.params.collection;
   let value = req.params.value;
-  console.log(req.params)
-  let filter = new RegExp (value, 'i');  // Insensible to Upper/Lower Case
-  let promise;
 
-  switch(collection){
+  let filter = new RegExp (value, 'i');  // Insensible to Upper/Lower Case
+  let promise;  // Save the Promise
+
+  switch(collection){  // Switch and Assign Promises
     case 'users':
-      promise = searchUsers(value, filter);
+      promise = searchUsers(filter);
       break;
     case 'hospitals':
-      promise = searchHospitals(value, filter);
+      promise = searchHospitals(filter);
       break;
     case 'doctors':
-      promise = searchDoctors(value, filter);
+      promise = searchDoctors(filter);
       break;
     default:
       return res.status(400).json({
           ok: false,
-          message: 'Tipos de búsqueda: \"user\", \"hospital\", \"doctor\"',
-          error: {message: "Colección de la DB no válida"}
+          message: 'Allowed Collections: \"users\", \"hospitals\", \"doctors\"'
         });
-  }
+    }
 
     promise.then(data => {
       return res.status(200).json({
           ok: true,
           [collection]: data  // ECMA Object Property
         });
-    })
-  };  // End of GET
+    });
+}  // End of Search Data
 
-
-function searchUsers(value, filter){
+function searchUsers(filter){  // PROMISE WITH USERS
   return new Promise((res,req) => {
-    userModel.find({}, 'name email role')
-             .or([{'name': filter}, {'email': filter}])
-             .exec((err, users) => {
-                if (err) req('Error al cargar usuarios ', err)
-                else res(users)
-             });
+    userModel.find({'name': filter}, {password:0}, (err, users) => {
+        if (err) req('Error loading Users', err)
+        else res(users);
+      });
   });
 }
 
-function searchHospitals(value, filter){
+function searchHospitals(filter){  // PROMISE WITH HOSPITALS
   return new Promise((res,req) => {
-    hospitalModel.find({name: filter}, (err, hospitals) => {
-      if (err){
-        req('Error al cargar Hospitales ', err);
-      } else {
-        res(hospitals);
-      }
-    }).populate('user', 'name email');
+    hospitalModel.find({'name': filter}, (err, hospitals) => {
+      if (err) req('Error loading Hospitals ', err)
+      else res(hospitals);
+    }).populate('user', 'name email');  // ID Mongo Ref
   });
 }
 
-function searchDoctors(value, filter){
+function searchDoctors(filter){  // PROMISE WITH DOCTORS
   return new Promise((res,req) => {
-    doctorModel.find({name: filter}, (err, doctors) => {
-      if (err){
-        req('Error al cargar Doctors ' + err);
-      } else {
-        res(doctors);
-      }
-    }).populate('user','name email')
+    doctorModel.find({'name': filter}, (err, doctors) => {
+      if (err) req('Error loading Doctors ', err);
+      else res(doctors);
+    }).populate('user','name email')  // ID Mongo Ref
       .populate('hospital');
   });
 }

@@ -1,12 +1,22 @@
 const doctorModel = require('../models/doctor');  // Doctor Model
-
+const {LIMIT} = require('../config/config');
 const DOCTORCTRL = {};  // Create Object.
 
 // CREATE //
 DOCTORCTRL.addDoctor = async (req, res) => {  // ADD A DOCTOR
 
     req.body.user = req.user._id;
+    console.log(req.body)
     const doctor = new doctorModel (req.body);
+
+    if (doctor.name == '' || doctor.lastName == '') {
+      return res.status(400).json({
+        ok: false,
+        message: "Doctor needs Name and LastName",
+        action: "Updating"
+      });
+    }
+
     await doctor.save((err, createdDoctor)=> {
       if (err) {
         return res.status(400).json({
@@ -36,8 +46,8 @@ DOCTORCTRL.getDoctors = async (req, res) => {  // Get ALL DOCTORS
         });
       }
     }).skip(offset)
-      .limit(10)
-      .populate('user','name email image')  // Get the Model Ref ID
+      .limit(LIMIT)
+      .populate('doctor','name email image')  // Get the Model Ref ID
       .populate('hospital');
 
     doctorModel.countDocuments({},(err, count) => {
@@ -52,49 +62,57 @@ DOCTORCTRL.getDoctors = async (req, res) => {  // Get ALL DOCTORS
 // UPDATE //
 DOCTORCTRL.updateDoctorbyId = async (req, res) => {  // UPDATE DOCTOR BY ID
 
-    let id = req.params.id;
-    let doctor = {  // Data Assignament
-      name: req.body.name,
-      user: req.user._id,  // Mongo ID
-      hospital: req.body.hospital
-    };
+  let id = req.params.id;
+  doctorModel.findById(id, (err, doctor) => {
+   if (err) {
+       return res.status(500).json({
+           ok: false,
+           mensaje: 'Error searching Doctor',
+           errors: err
+       });
+   }
 
-    if (doctor.name == null || doctor.user == null || doctor.hospital == null) {
-      return res.status(400).json({
-        ok: false,
-        message: "Doctor needs Name, User and Hospital",
-      });
-    }
+   if (!doctor) {  // No Doctor with given ID?
+       return res.status(400).json({
+           ok: false,
+           mensaje: "Doctor with ID " + id + " doesn't exist"
+       });
+   }
 
-    await doctorModel.findByIdAndUpdate(id, {$set: doctor}, (err, updatedDoctor) => {
-      if (!updatedDoctor){
-        return res.status(400).json({
-          ok: false,
-          message: "Doctor with ID " + id + " doesn't exist",
-          err
+   doctor.name = req.body.name;  // Data Assignament
+   doctor.lastName = req.body.lastName;
+
+   if (doctor.name == '' || doctor.lastName == '') {
+     return res.status(400).json({
+       ok: false,
+       message: "Doctor needs Name and LastName",
+       action: "Updating"
+     });
+   }
+
+   doctor.save((err, updatedDoctor) => {  // Save Doctor with the new Data
+       if (err) {
+           return res.status(400).json({
+               ok: false,
+               mensaje: 'Error updating Doctor',
+               errors: err
+           });
+         }
+         updatedDoctor.password = null;  // No need Response the Password
+
+         res.status(200).json({
+             ok: true,
+             doctor: updatedDoctor
         });
-      }
-
-      if (err){
-        return  res.status(500).json({
-            ok: false,
-            message: 'Error updating Doctor',
-            err
-          });
-      }
-
-      res.status(200).json({
-        ok: true,
-        doctor: updatedDoctor
-      });
-    });  // Find by ID and Update in MongoDB
+    }); // End of Save
+  }); // End of Find
 }
 
 // DELETE //
 DOCTORCTRL.deleteDoctor = async (req, res) => {  // Remove Doctor from MongoDB
 
     let id = req.params.id;
-    await doctorModel.findByIdAndRemove(id, (err, deletedDoctor) => {
+    doctorModel.findByIdAndRemove(id, (err, deletedDoctor) => {
       if (err) {
         return res.status(500).json({
           ok: false,

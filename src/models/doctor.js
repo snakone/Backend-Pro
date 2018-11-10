@@ -5,6 +5,7 @@ const validator = require ('mongoose-unique-validator');  // Validate Unique Fie
 
 var doctorSchema = new Schema({
 		name: { type: String, required: [true, 'Doctor\'s name required'] },
+		lastName: { type: String, required: [true, 'Doctor\'s lastName required'] },
 		image: { type: String, required: false },
 		user: { type: Schema.Types.ObjectId, ref: 'User', required: true },  // ID Mongo Ref
 		hospital: { type: Schema.Types.ObjectId, ref: 'Hospital',  // ID Mongo Ref

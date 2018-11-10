@@ -1,6 +1,6 @@
 const userModel = require('../models/user');  // User Model
 const encrypt = require('bcryptjs');  // Encrypt Password
-
+const {LIMIT} = require('../config/config');
 const USERCTRL = {};  // Create Object.
 
 // CREATE
@@ -8,6 +8,16 @@ USERCTRL.addUser = async (req, res) => {  // ADD AN USER
 
     req.body.password = encrypt.hashSync(req.body.password, 10);  // Encrypt
     const user = new userModel (req.body);
+
+    if (user.name == '' || user.lastName == '' ||
+        user.email == '' || user.password == '') {
+      return res.status(400).json({
+        ok: false,
+        message: "User needs Name, LastName, Email and Password",
+        action: "Creation"
+      });
+    }
+
     await user.save((err, createdUser)=> {
       if (err) {
         return res.status(400).json({
@@ -37,7 +47,7 @@ USERCTRL.getUsers = async (req, res) => {  // GET ALL USERS
         });
       }
     }).skip(offset)
-      .limit(10);
+      .limit(LIMIT);
 
     userModel.countDocuments({},(err, count) => {  // Document Count
       res.status(200).json({
@@ -50,7 +60,7 @@ USERCTRL.getUsers = async (req, res) => {  // GET ALL USERS
 
 // UPDATE
 USERCTRL.updateUserbyId = async (req, res) => {  // UPDATE AN USER BY ID
-  
+
   let id = req.params.id;
   userModel.findById(id, (err, user) => {
    if (err) {
@@ -72,6 +82,15 @@ USERCTRL.updateUserbyId = async (req, res) => {  // UPDATE AN USER BY ID
    user.email = req.body.email;
    user.lastName = req.body.lastName;
    user.role = req.body.role;
+
+   if (user.name == '' || user.lastName == '' ||
+       user.email == '' || user.password == '') {
+     return res.status(400).json({
+       ok: false,
+       message: "User needs Name, LastName, Email and Password",
+       action: "Updating"
+     });
+   }
 
    user.save((err, updatedUser) => {  // Save User with the new Data
        if (err) {

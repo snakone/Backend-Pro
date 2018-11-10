@@ -11,7 +11,7 @@ exports.verifyToken = async (req, res, next) => {
         err
       });
     }
-    req.user = decoded.user; // ASK FERNANDO ABOUT THIS
+    req.user = decoded.user;  // Verified User = User Requesting to API
     next();  // Token Valid? Continue
   });
 }

@@ -17,7 +17,6 @@ const fileUpload = require ('express-fileupload');
 
 app.use(fileUpload());  // Use FileUpload
 
-
 // Settings
 app.set('port', process.env.PORT || 3000);  // S.O Port or Port 3000
 

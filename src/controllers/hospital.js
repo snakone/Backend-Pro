@@ -1,12 +1,21 @@
 const hospitalModel = require('../models/hospital');  // Hospital Model
-
+const {LIMIT} = require('../config/config');
 const HOSPITALCTRL = {};  // Create Object
 
 // CREATE //
 HOSPITALCTRL.addHospital = async (req, res) => {  // ADD A HOSPITAL
 
-  req.body.hospital = req.hospital._id;
+  req.body.user = req.user._id;
   const hospital = new hospitalModel (req.body);
+
+  if (hospital.name == '' || hospital.user == null) {
+    return res.status(400).json({
+      ok: false,
+      message: "Hospital needs Name, Address and User",
+      action: "Creation"
+    });
+  }
+
   await hospital.save((err, createdHospital)=> {
     if (err) {
       return res.status(400).json({
@@ -36,7 +45,7 @@ HOSPITALCTRL.getHospitals = async (req, res) => {  // GET ALL HOSPITALS
       });
     }
   }).skip(offset)
-    .limit(10)
+    .limit(LIMIT)
     .populate('hospital','name email image');
 
     hospitalModel.countDocuments({},(err, count) => {
@@ -52,7 +61,7 @@ HOSPITALCTRL.getHospitals = async (req, res) => {  // GET ALL HOSPITALS
 HOSPITALCTRL.updateHospitalbyId = async (req, res) => {  // UPDATE HOSPITAL
 
   let id = req.params.id;
-  hospitalModel.findById(id, (err, hospital) => {
+  await hospitalModel.findById(id, (err, hospital) => {
    if (err) {
        return res.status(500).json({
            ok: false,
@@ -70,6 +79,15 @@ HOSPITALCTRL.updateHospitalbyId = async (req, res) => {  // UPDATE HOSPITAL
 
    hospital.name = req.body.name;  // Data Assignament
    hospital.address = req.body.address;
+   console.log(hospital)
+
+   if (hospital.name == '' || hospital.address == '') {
+     return res.status(400).json({
+       ok: false,
+       message: "Hospital needs Name, Address and User",
+       action: "Updating"
+     });
+   }
 
    hospital.save((err, updatedhospital) => {
        if (err) {
@@ -92,7 +110,7 @@ HOSPITALCTRL.updateHospitalbyId = async (req, res) => {  // UPDATE HOSPITAL
 HOSPITALCTRL.deleteHospital = async (req, res) => {  // DELETE HOSPITAL
 
   let id = req.params.id;
-  await hospitalModel.findByIdAndRemove(id, (err, deletedHospital) => {
+  hospitalModel.findByIdAndRemove(id, (err, deletedHospital) => {
     if (err) {
       return res.status(500).json({
         ok: false,

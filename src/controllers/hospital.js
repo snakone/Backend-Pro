@@ -8,7 +8,7 @@ HOSPITALCTRL.addHospital = async (req, res) => {  // ADD A HOSPITAL
   req.body.user = req.user._id;
   const hospital = new hospitalModel (req.body);
 
-  if (hospital.name == '' || hospital.user == null) {
+  if (hospital.name == '' || hospital.address == '' || hospital.user == '') {
     return res.status(400).json({
       ok: false,
       message: "Hospital needs Name, Address and User",
@@ -46,7 +46,7 @@ HOSPITALCTRL.getHospitals = async (req, res) => {  // GET ALL HOSPITALS
     }
   }).skip(offset)
     .limit(LIMIT)
-    .populate('hospital','name email image');
+    .populate('user', 'name email image');
 
     hospitalModel.countDocuments({},(err, count) => {
       res.status(200).json({
@@ -57,8 +57,34 @@ HOSPITALCTRL.getHospitals = async (req, res) => {  // GET ALL HOSPITALS
     });
 }
 
+HOSPITALCTRL.getHospitalById = async (req, res) => {
+    let id = req.params.id;
+    hospitalModel.findById(id, (err, hospital) => {
+     if (err) {
+         return res.status(500).json({
+             ok: false,
+             mensaje: 'Error searching Hospital',
+             errors: err
+          });
+        }
+
+     if (!hospital) {  // No Hospital with given ID?
+          return res.status(400).json({
+              ok: false,
+              mensaje: "Hospital with ID " + id + " doesn't exist"
+          });
+       }
+
+       res.status(200).json({
+         ok: true,
+         hospital
+       });
+    }) // End of Find
+    .populate('user', 'name email image');
+}
+
 // UPDATE //
-HOSPITALCTRL.updateHospitalbyId = async (req, res) => {  // UPDATE HOSPITAL
+HOSPITALCTRL.updateHospitalById = async (req, res) => {  // UPDATE HOSPITAL
 
   let id = req.params.id;
   await hospitalModel.findById(id, (err, hospital) => {

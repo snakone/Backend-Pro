@@ -9,10 +9,10 @@ DOCTORCTRL.addDoctor = async (req, res) => {  // ADD A DOCTOR
     console.log(req.body)
     const doctor = new doctorModel (req.body);
 
-    if (doctor.name == '' || doctor.lastName == '') {
+    if (doctor.name == '' || doctor.lastName == '' || doctor.hospital == '') {
       return res.status(400).json({
         ok: false,
-        message: "Doctor needs Name and LastName",
+        message: "Doctor needs Name, LastName and Hospital",
         action: "Updating"
       });
     }
@@ -59,8 +59,35 @@ DOCTORCTRL.getDoctors = async (req, res) => {  // Get ALL DOCTORS
     });
 }
 
+DOCTORCTRL.getDoctorById = async (req, res) => {
+    let id = req.params.id;
+    doctorModel.findById(id, (err, doctor) => {
+     if (err) {
+         return res.status(500).json({
+             ok: false,
+             mensaje: 'Error searching Doctor',
+             errors: err
+          });
+        }
+
+     if (!doctor) {  // No Doctor with given ID?
+          return res.status(400).json({
+              ok: false,
+              mensaje: "Doctor with ID " + id + " doesn't exist"
+          });
+       }
+
+       res.status(200).json({
+         ok: true,
+         doctor
+       });
+    }) // End of Find
+    .populate('user', 'name email image')
+    .populate('hospital');
+}
+
 // UPDATE //
-DOCTORCTRL.updateDoctorbyId = async (req, res) => {  // UPDATE DOCTOR BY ID
+DOCTORCTRL.updateDoctorById = async (req, res) => {  // UPDATE DOCTOR BY ID
 
   let id = req.params.id;
   doctorModel.findById(id, (err, doctor) => {

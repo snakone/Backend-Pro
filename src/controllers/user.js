@@ -22,7 +22,7 @@ USERCTRL.addUser = async (req, res) => {  // ADD AN USER
       if (err) {
         return res.status(400).json({
           ok: false,
-          message: "Error creating User",
+          message: "Email must be unique!",
           err
         });
       }
@@ -58,8 +58,34 @@ USERCTRL.getUsers = async (req, res) => {  // GET ALL USERS
     });
 }
 
+USERCTRL.getUserById = async (req, res) => {
+    let id = req.params.id;
+    userModel.findById(id, (err, user) => {
+     if (err) {
+         return res.status(500).json({
+             ok: false,
+             mensaje: 'Error searching User',
+             errors: err
+          });
+        }
+
+     if (!user) {  // No User with given ID?
+          return res.status(400).json({
+              ok: false,
+              mensaje: "User with ID " + id + " doesn't exist"
+          });
+       }
+
+       res.status(200).json({
+         ok: true,
+         user
+       });
+    }) // End of Find
+    .populate('user', 'name email image');
+}
+
 // UPDATE
-USERCTRL.updateUserbyId = async (req, res) => {  // UPDATE AN USER BY ID
+USERCTRL.updateUserById = async (req, res) => {  // UPDATE AN USER BY ID
 
   let id = req.params.id;
   userModel.findById(id, (err, user) => {

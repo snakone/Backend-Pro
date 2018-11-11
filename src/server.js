@@ -27,8 +27,8 @@ app.use(express.json());  // Body Parse to JSON
 app.use(cors({origin: "http://localhost:4200"}));  // Use Cors to connect Angular
 
 // Routes
-app.use('/', searchRouter);  // Search Route
 app.use('/', loginRouter);  // Login Route
+app.use('/', searchRouter);  // Search Route
 app.use('/', userRouter);  // User Route
 app.use('/', hospitalRouter);  // Hospital Route
 app.use('/', doctorRouter);  // Doctor Route

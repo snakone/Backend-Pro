@@ -70,7 +70,7 @@ function searchHospitals(filter){  // PROMISE WITH HOSPITALS
     hospitalModel.find({'name': filter}, (err, hospitals) => {
       if (err) req('Error loading Hospitals ', err)
       else res(hospitals);
-    }).populate('user', 'name email');  // ID Mongo Ref
+    }).populate('user', 'name email image');  // ID Mongo Ref
   });
 }
 
@@ -79,8 +79,8 @@ function searchDoctors(filter){  // PROMISE WITH DOCTORS
     doctorModel.find({'name': filter}, (err, doctors) => {
       if (err) req('Error loading Doctors ', err);
       else res(doctors);
-    }).populate('user','name email')  // ID Mongo Ref
-      .populate('hospital');
+    }).populate('user','name email image')  // ID Mongo Ref
+      .populate('hospital', 'name address image');
   });
 }
 

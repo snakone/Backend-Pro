@@ -3,8 +3,11 @@ const encrypt = require('bcryptjs');  // Encrypt Password
 const jwt = require ('jsonwebtoken');  // JSON WEB TOKEN
 
 const { SEED } = require('../config/config');  // SEED + Hash = Token
+const { MENU } = require('../config/config');  // User Menu
 const { CLIENT_ID } = require('../config/config'); // GOOGLE Developer ID
 const { OAuth2Client } = require('google-auth-library');
+
+const { userMenu } = require('../middlewares/user-menu');  // User Menu
 
 const client = new OAuth2Client(CLIENT_ID);  // New GOOGLE Client
 
@@ -49,7 +52,8 @@ LOGINCTRL.login = async (req, res)=> {
         message: 'Logged in',
         user,
         token: token,
-        _id: user._id
+        _id: user._id,
+        menu: userMenu(user.role)
       });
     }); // End of findOne
 }
@@ -76,8 +80,8 @@ LOGINCTRL.loginGoogle = async (req, res)=> {
       });
     }
 
-    if (user) {  // Using Google SignIn with Google = False? No Thanks!
-      if (user.google === false){
+    if (user) {
+      if (user.google === false){  // Google SignIn with Google = False? No Thanks!
         return res.status(400).json({
           ok: false,
           message: "You are not Google User. Use a Email/Password connection instead",
@@ -92,7 +96,8 @@ LOGINCTRL.loginGoogle = async (req, res)=> {
           message: 'Logged in',
           user,
           token: token,
-          _id: user._id
+          _id: user._id,
+          menu: userMenu(user.role)
         });
 
     } else {  // No Google User with the Email? Create ONE!
@@ -116,6 +121,7 @@ LOGINCTRL.loginGoogle = async (req, res)=> {
           message: 'Google User created',
           createdUser,
           token: token,
+          menu: userMenu(user.role)
         });
       });
     }
@@ -128,6 +134,7 @@ async function verify(token) {  // Verify Token Function
       idToken: token,
       audience: CLIENT_ID
     });
+
     const payload = ticket.getPayload();  // Payload = User
     return {
       name: payload.name,
@@ -136,6 +143,19 @@ async function verify(token) {  // Verify Token Function
       google: true
     };
 }
+
+// REFRESH TOKEN //
+LOGINCTRL.refreshToken = async (req, res) => {
+
+    // TOKEN
+    let token = jwt.sign({user: req.user}, SEED, {expiresIn: 14400});  // 4 HOURS
+
+    res.status(200).json({
+      ok: true,
+      token: token
+    });
+}
+
 
 
 module.exports = LOGINCTRL;  // Exports the Object with all the Methods
